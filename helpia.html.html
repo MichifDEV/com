@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Soporte IA</title>
+
+<style>
+    body {
+        background: #0f1724;
+        color: #ffffff;
+        font-family: Arial;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+    }
+    .chat-box {
+        width: 90%;
+        max-width: 700px;
+        background: #111827;
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 12px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.4);
+    }
+    #messages {
+        height: 400px;
+        overflow-y: auto;
+        padding: 10px;
+        border-radius: 8px;
+        background: #0c111b;
+        margin-bottom: 12px;
+    }
+    .msg { margin-bottom: 14px; padding: 10px; border-radius: 8px; max-width: 80%; white-space: pre-wrap; }
+    .user { background:#10b9813d; margin-left:auto; }
+    .bot { background:#1e2536; }
+    textarea {
+        width: 100%;
+        padding: 10px;
+        background: #1e2536;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        resize: none;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        background: #10b981;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+        color: #042016;
+    }
+</style>
+</head>
+<body>
+
+<div class="chat-box">
+
+    <h2>Soporte IA</h2>
+
+    <div id="messages"></div>
+
+    <textarea id="userInput" rows="3" placeholder="Escribe tu pregunta aquí..."></textarea>
+    <button onclick="sendMessage()">Enviar</button>
+
+</div>
+
+<script>
+/* ------------------------------------------
+   🔑 PON AQUÍ TU API KEY
+------------------------------------------ */
+const OPENAI_KEY = "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";
+
+/* ------------------------------------------
+   😀 PERSONALIDAD DE LA IA
+------------------------------------------ */
+const AI_STYLE = `
+Eres un asistente de soporte amigable, claro, útil y educado.
+Respondes sobre mecánicas, historia y dudas del juego.
+`;
+
+/* ------------------------------------------
+   📘 HISTORIA DEL JUEGO (VERSIÓN COMPRIMIDA)
+------------------------------------------ */
+
+const LORE = `
+La historia del juego gira en torno a la máquina RV8-9, creada por la organización nazi S.N.N.
+La RV8-9 era capaz de revivir cadáveres para que obedecieran órdenes, siendo usada como arma secreta.
+Al finalizar la Segunda Guerra Mundial, la máquina quedó olvidada hasta ser redescubierta en 1955 por el científico Lukas Schneider.
+
+El científico descubre junto a un prisionero que la máquina puede revivir muertos, pero algunos salen defectuosos: los "Muertos Fallidos".
+Schneider decide trasladar la máquina a Vietnam del Norte, donde el general Võ Nguyên Giáp permite usarla para crear más soldados.
+Sin embargo, la máquina se vuelve inestable, generando zombis incontrolables.
+
+En 1956, durante una noche, la máquina revive a 100 sujetos que despiertan sin control, atacando y matando al científico.
+Al día siguiente, los compañeros del laboratorio encuentran el lugar lleno de sangre, restos humanos y la máquina desaparecida.
+A partir de este evento, comienza el brote que da origen al universo del juego.
+`;
+
+/* ------------------------------------------
+   🚀 FUNCIÓN DE ENVÍO
+------------------------------------------ */
+async function sendMessage() {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    const messagesDiv = document.getElementById("messages");
+
+    if (!text) return;
+
+    messagesDiv.innerHTML += `<div class='msg user'>${text}</div>`;
+    input.value = "";
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    const botDiv = document.createElement("div");
+    botDiv.className = "msg bot";
+    botDiv.innerText = "Escribiendo...";
+    messagesDiv.appendChild(botDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + OPENAI_KEY
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: AI_STYLE },
+                    { role: "system", content: "Esta es la historia oficial del juego: " + LORE },
+                    { role: "user", content: text }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        botDiv.innerText = data.choices?.[0]?.message?.content || "Error en la respuesta.";
+
+    } catch (e) {
+        botDiv.innerText = "Error: " + e.message;
+    }
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+</script>
+
+</body>
+</html>
